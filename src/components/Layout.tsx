@@ -15,7 +15,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex h-screen bg-gray-50">
       <aside className="w-56 bg-white border-r flex flex-col">
         <div className="p-4 border-b">
-          <h1 className="text-xl font-bold text-gray-900">aukse</h1>
+          <h1 className="text-xl font-bold text-gray-900">
+            <img src="/aukse-logo.svg" alt="aukse" className="h-8" />
+          </h1>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {nav.map((item) => (

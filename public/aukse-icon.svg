@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg1"
+   width="160"
+   height="160"
+   viewBox="0 0 160 160"
+   sodipodi:docname="aukse logo minimal.svg"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.6195242"
+     inkscape:cx="60.511601"
+     inkscape:cy="117.62714"
+     inkscape:window-width="1680"
+     inkscape:window-height="912"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <defs
+     id="defs1" />
+  <g
+     id="g1"
+     transform="translate(-5.5571878,-3.7047919)">
+    <path
+       style="fill:#000000"
+       d="m 41.593104,139.31685 c -16.32995,-4.79332 -19.814997,-28.4398 -5.65906,-38.39745 l 4.32397,-3.041591 24.76623,-0.5 c 29.181656,-0.58914 26.30203,0.50498 36.111106,-13.720461 6.50718,-9.436918 12.18241,-11.905588 18.99187,-8.261278 2.404,1.28658 18.00331,24.71933 21.60578,32.45546 8.45112,18.1484 -10.57179,38.64155 -28.36966,30.56227 -4.53443,-2.05839 -6.18906,-4.11395 -16.53047,-20.53599 -10.302196,-16.35977 -14.430636,-16.28719 -24.096916,0.42359 -11.98784,20.72425 -18.09496,24.84538 -31.14285,21.01545 z m 33,-63.82547 C 50.819504,64.5406 58.886724,29.25685 85.179004,29.19166 111.125,29.12736 118.34126,65.89075 94.35025,75.91483 89.445934,77.96399 79.498154,77.75078 74.593104,75.49138 Z"
+       id="path1" />
+  </g>
+</svg>
