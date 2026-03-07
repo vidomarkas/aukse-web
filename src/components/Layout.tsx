@@ -5,6 +5,7 @@ const nav = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Transactions", href: "/transactions" },
   { label: "Categories", href: "/categories" },
+  { label: "Budgets", href: "/budgets" },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
