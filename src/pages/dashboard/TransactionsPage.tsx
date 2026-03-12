@@ -173,71 +173,75 @@ export default function TransactionsPage() {
         <p className="text-gray-500">Loading transactions...</p>
       ) : (
         <div className="bg-white rounded-lg border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Date</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Description</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Category</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">Type</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">Amount</th>
-                <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {data?.data.map((tx) => (
-                <tr key={tx.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-500">
-                    {new Date(tx.date).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 text-gray-900">{tx.description ?? "—"}</td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {tx.category ? `${tx.category.icon} ${tx.category.name}` : "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                      tx.type === "income"
-                        ? "bg-green-100 text-green-700"
-                        : tx.type === "transfer"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-red-100 text-red-700"
-                    }`}>
-                      {tx.type}
-                    </span>
-                  </td>
-                  <td className={`px-4 py-3 text-right font-medium ${
-                    tx.type === "income" ? "text-green-600" : "text-red-600"
-                  }`}>
-                    {tx.type === "income" ? "+" : "-"}{tx.amount} {tx.currency}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => openEdit(tx)}
-                        className="text-xs text-blue-600 hover:underline"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(tx.id)}
-                        className="text-xs text-red-500 hover:underline"
-                        disabled={deleteTransaction.isPending}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {data?.data.length === 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b">
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
-                    No transactions yet
-                  </td>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Date</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600">Description</th>
+                  <th className="hidden sm:table-cell text-left px-4 py-3 font-medium text-gray-600">Category</th>
+                  <th className="hidden sm:table-cell text-left px-4 py-3 font-medium text-gray-600">Type</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-600">Amount</th>
+                  <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y">
+                {data?.data.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                      {new Date(tx.date).toLocaleDateString()}
+                    </td>
+                    <td className="px-4 py-3 text-gray-900 max-w-[140px] truncate">
+                      {tx.description ?? "—"}
+                    </td>
+                    <td className="hidden sm:table-cell px-4 py-3 text-gray-500">
+                      {tx.category ? `${tx.category.icon} ${tx.category.name}` : "—"}
+                    </td>
+                    <td className="hidden sm:table-cell px-4 py-3">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        tx.type === "income"
+                          ? "bg-green-100 text-green-700"
+                          : tx.type === "transfer"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-red-100 text-red-700"
+                      }`}>
+                        {tx.type}
+                      </span>
+                    </td>
+                    <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${
+                      tx.type === "income" ? "text-green-600" : "text-red-600"
+                    }`}>
+                      {tx.type === "income" ? "+" : "-"}{tx.amount} {tx.currency}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEdit(tx)}
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(tx.id)}
+                          className="text-xs text-red-500 hover:underline"
+                          disabled={deleteTransaction.isPending}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {data?.data.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                      No transactions yet
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </Layout>

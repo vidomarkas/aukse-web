@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Wallet } from "lucide-react"
+import { Menu, Wallet, X } from "lucide-react"
 
 const nav = [
   { label: "Dashboard", href: "/dashboard" },
@@ -55,6 +55,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<FormState>(emptyForm)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   async function handleSubmit() {
     if (!household) return
@@ -69,18 +70,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-56 bg-white border-r flex flex-col">
-        <div className="p-4 border-b">
-        <h1 className="text-xl font-bold text-gray-900">
-            <img src="/aukse-logo.svg" alt="aukse" className="h-8" />
-          </h1>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-56 bg-white border-r flex flex-col transition-transform duration-200 md:static md:translate-x-0 md:shrink-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="p-4 border-b flex items-center justify-between">
+          <img src="/aukse-logo.svg" alt="aukse" className="h-8" />
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="md:hidden p-1 rounded hover:bg-gray-100"
+          >
+            <X size={18} />
+          </button>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {nav.map((item) => (
             <Link
               key={item.href}
               to={item.href}
+              onClick={() => setSidebarOpen(false)}
               className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 pathname === item.href
                   ? "bg-gray-100 text-gray-900"
@@ -91,23 +109,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
-        <div className="p-4 border-t flex items-center gap-2">
+        <div className="p-4 border-t flex items-center gap-2 min-w-0">
           <UserButton />
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-gray-600 truncate">
             {user?.firstName ?? user?.emailAddresses[0].emailAddress}
           </span>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto p-6 relative">
-        {children}
+      <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b shrink-0">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-1.5 rounded hover:bg-gray-100"
+          >
+            <Menu size={20} />
+          </button>
+          <img src="/aukse-logo.svg" alt="aukse" className="h-7" />
+          <div className="ml-auto">
+            <UserButton />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4 md:p-6">
+          {children}
+        </div>
 
         {/* Floating add button */}
         {household && (
           <button
             onClick={() => setOpen(true)}
-            className="fixed bottom-6 right-6 w-12 h-12 bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors flex items-center justify-center text-2xl"
+            className="fixed bottom-6 right-6 w-12 h-12 bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors flex items-center justify-center"
           >
             <Wallet />
           </button>

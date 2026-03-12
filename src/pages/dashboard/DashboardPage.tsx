@@ -69,7 +69,7 @@ export default function DashboardPage() {
         <Layout>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h2>
             {/* Stats cards */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <div className="bg-white border rounded-lg p-5">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                         Spent this month
@@ -97,7 +97,7 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Spending by category */}
                 <div className="bg-white border rounded-lg p-5">
                     <h3 className="text-sm font-semibold text-gray-700 mb-4">Spending by category</h3>
