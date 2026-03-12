@@ -11,6 +11,8 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
 } from "recharts"
 import { Budget } from "@/types"
+import { useMemo } from "react"
+
 
 export default function DashboardPage() {
     const { data: household, isLoading } = useHousehold()
@@ -19,6 +21,27 @@ export default function DashboardPage() {
     const { data: budgets } = useBudgets(household?.id)
     const { data: categories } = useCategories(household?.id)
     const { data: transactions } = useTransactions(household?.id)
+
+    const currentMonthStats = useMemo(() => {
+        if (!transactions) return { spent: 0, income: 0, balance: 0 }
+
+        const now = new Date()
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
+        const currentMonth = transactions.data.filter(
+            (tx) => new Date(tx.date) >= monthStart
+        )
+
+        const spent = currentMonth
+            .filter((tx) => tx.type === "expense")
+            .reduce((sum, tx) => sum + Number(tx.amount), 0)
+
+        const income = currentMonth
+            .filter((tx) => tx.type === "income")
+            .reduce((sum, tx) => sum + Number(tx.amount), 0)
+
+        return { spent, income, balance: income - spent }
+    }, [transactions])
 
     if (isLoading) return <Layout><p>Loading...</p></Layout>
     if (!household) return <Layout><CreateHousehold /></Layout>
@@ -39,9 +62,40 @@ export default function DashboardPage() {
             .reduce((sum, tx) => sum + Number(tx.amount), 0)
     }
 
+
+
+
     return (
         <Layout>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h2>
+            {/* Stats cards */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="bg-white border rounded-lg p-5">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Spent this month
+                    </p>
+                    <p className="text-2xl font-bold text-red-600 mt-1">
+                        €{currentMonthStats.spent.toFixed(2)}
+                    </p>
+                </div>
+                <div className="bg-white border rounded-lg p-5">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Income this month
+                    </p>
+                    <p className="text-2xl font-bold text-green-600 mt-1">
+                        €{currentMonthStats.income.toFixed(2)}
+                    </p>
+                </div>
+                <div className="bg-white border rounded-lg p-5">
+                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Balance
+                    </p>
+                    <p className={`text-2xl font-bold mt-1 ${currentMonthStats.balance >= 0 ? "text-gray-900" : "text-red-600"
+                        }`}>
+                        €{currentMonthStats.balance.toFixed(2)}
+                    </p>
+                </div>
+            </div>
 
             <div className="grid grid-cols-2 gap-6">
                 {/* Spending by category */}
