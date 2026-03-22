@@ -4,14 +4,25 @@ import { useCreateHousehold } from "../hooks/useHousehold"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
-export default function CreateHousehold() {
+interface Props {
+  onCreated?: () => void
+}
+
+export default function CreateHousehold({ onCreated }: Props = {}) {
   const { user } = useUser()
   const [name, setName] = useState("")
+  const [error, setError] = useState<string | null>(null)
   const createHousehold = useCreateHousehold()
 
   async function handleSubmit() {
-    if (!name.trim()) return
-    await createHousehold.mutateAsync(name)
+    if (!name.trim() || createHousehold.isPending) return
+    setError(null)
+    try {
+      await createHousehold.mutateAsync(name.trim())
+      onCreated?.()
+    } catch (err: any) {
+      setError(err?.response?.data?.error ?? "Failed to create household. Please try again.")
+    }
   }
 
   return (
@@ -29,6 +40,7 @@ export default function CreateHousehold() {
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
         />
+        {error && <p className="text-sm text-red-500">{error}</p>}
         <Button
           className="w-full"
           onClick={handleSubmit}

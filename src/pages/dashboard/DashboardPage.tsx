@@ -1,5 +1,5 @@
 import Layout from "../../components/Layout"
-import { useHousehold } from "../../hooks/useHousehold"
+import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
 import CreateHousehold from "../../components/CreateHousehold"
 import { useBudgets } from "../../hooks/useBudgets"
 import { useCategories } from "../../hooks/useCategories"
@@ -15,7 +15,8 @@ import { useMemo } from "react"
 
 
 export default function DashboardPage() {
-    const { data: household, isLoading } = useHousehold()
+    const { isLoading } = useHouseholds()
+    const household = useActiveHouseholdData()
     const spendingByCategory = useSpendingByCategory(household?.id)
     const monthlySpending = useMonthlySpending(household?.id)
     const { data: budgets } = useBudgets(household?.id)

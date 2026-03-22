@@ -1,6 +1,6 @@
 import { useState } from "react"
 import Layout from "../../components/Layout"
-import { useHousehold } from "../../hooks/useHousehold"
+import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
 import {
   useCategories,
   useCreateCategory,
@@ -46,7 +46,8 @@ const COLORS = [
 ]
 
 export default function CategoriesPage() {
-  const { data: household, isLoading: householdLoading } = useHousehold()
+  const { isLoading: householdLoading } = useHouseholds()
+  const household = useActiveHouseholdData()
   const { data: categories, isLoading } = useCategories(household?.id)
   const createCategory = useCreateCategory()
   const updateCategory = useUpdateCategory()

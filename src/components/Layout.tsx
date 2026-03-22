@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom"
 import { UserButton, useUser } from "@clerk/clerk-react"
-import { useState } from "react"
-import { useHousehold } from "../hooks/useHousehold"
+import { useState, useEffect } from "react"
+import { useActiveHouseholdData } from "../hooks/useHousehold"
 import { useCategories } from "../hooks/useCategories"
 import { useCreateTransaction } from "../hooks/useTransactions"
 import {
@@ -20,6 +20,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ArrowLeftRight, LayoutDashboard, PiggyBank, Tag, Wallet } from "lucide-react"
+import HouseholdSwitcher from "./HouseholdSwitcher"
+import CreateHousehold from "./CreateHousehold"
 
 const nav = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -49,12 +51,21 @@ const emptyForm: FormState = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const { user } = useUser()
-  const { data: household } = useHousehold()
+  const household = useActiveHouseholdData()
   const { data: categories } = useCategories(household?.id)
   const createTransaction = useCreateTransaction()
 
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<FormState>(emptyForm)
+  const [createHouseholdOpen, setCreateHouseholdOpen] = useState(false)
+
+  useEffect(() => {
+    function handleOpenCreate() {
+      setCreateHouseholdOpen(true)
+    }
+    window.addEventListener("open-create-household", handleOpenCreate)
+    return () => window.removeEventListener("open-create-household", handleOpenCreate)
+  }, [])
 
   async function handleSubmit() {
     if (!household) return
@@ -73,6 +84,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <aside className="hidden md:flex w-56 bg-white border-r flex-col shrink-0">
         <div className="p-4 border-b">
           <img src="/aukse-logo.svg" alt="aukse" className="h-8" />
+        </div>
+        <div className="border-b pt-2">
+          <HouseholdSwitcher />
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {nav.map((item) => (
@@ -205,6 +219,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {createTransaction.isPending ? "Saving..." : "Save transaction"}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create household dialog (triggered from HouseholdSwitcher) */}
+      <Dialog open={createHouseholdOpen} onOpenChange={setCreateHouseholdOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New household</DialogTitle>
+          </DialogHeader>
+          <CreateHousehold onCreated={() => setCreateHouseholdOpen(false)} />
         </DialogContent>
       </Dialog>
     </div>

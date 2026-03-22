@@ -1,6 +1,6 @@
 import { useState } from "react"
 import Layout from "../../components/Layout"
-import { useHousehold } from "../../hooks/useHousehold"
+import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
 import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction } from "../../hooks/useTransactions"
 import { useCategories } from "../../hooks/useCategories"
 import { Button } from "@/components/ui/button"
@@ -41,7 +41,8 @@ const emptyForm: FormState = {
 }
 
 export default function TransactionsPage() {
-  const { data: household, isLoading: householdLoading } = useHousehold()
+  const { isLoading: householdLoading } = useHouseholds()
+  const household = useActiveHouseholdData()
   const { data, isLoading } = useTransactions(household?.id)
   const { data: categories } = useCategories(household?.id)
   const createTransaction = useCreateTransaction()
@@ -191,8 +192,13 @@ export default function TransactionsPage() {
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                       {new Date(tx.date).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-gray-900 max-w-[140px] truncate">
-                      {tx.description ?? "—"}
+                    <td className="px-4 py-3 max-w-[160px]">
+                      <span className="block text-gray-900 truncate">{tx.description ?? "—"}</span>
+                      {tx.user && (
+                        <span className="block text-xs text-gray-400 truncate">
+                          {tx.user.name ?? tx.user.email}
+                        </span>
+                      )}
                     </td>
                     <td className="hidden sm:table-cell px-4 py-3 text-gray-500">
                       {tx.category ? `${tx.category.icon} ${tx.category.name}` : "—"}

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import Layout from "../../components/Layout"
-import { useHousehold } from "../../hooks/useHousehold"
+import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
 import { useBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget } from "../../hooks/useBudgets"
 import { useCategories } from "../../hooks/useCategories"
 import { useTransactions } from "../../hooks/useTransactions"
@@ -40,7 +40,8 @@ const emptyForm: FormState = {
 }
 
 export default function BudgetsPage() {
-  const { data: household, isLoading: householdLoading } = useHousehold()
+  const { isLoading: householdLoading } = useHouseholds()
+  const household = useActiveHouseholdData()
   const { data: budgets, isLoading } = useBudgets(household?.id)
   const { data: categories } = useCategories(household?.id)
   const { data: transactions } = useTransactions(household?.id)

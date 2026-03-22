@@ -3,6 +3,7 @@ export type Transaction = {
   householdId: string
   accountId?: string
   categoryId?: string
+  userId: string
   amount: number
   currency: string
   type: "expense" | "income" | "transfer"
@@ -12,6 +13,33 @@ export type Transaction = {
   category?: Category
   account?: Account
   tags?: { tag: Tag }[]
+  user?: { id: string; name: string | null; email: string }
+}
+
+export interface HouseholdMember {
+  id: string
+  householdId: string
+  userId: string
+  role: 'owner' | 'member'
+  joinedAt: string
+  user: {
+    id: string
+    name: string | null
+    email: string
+    avatarUrl: string | null
+  }
+}
+
+export interface Invitation {
+  id: string
+  token: string
+  householdId: string
+  email: string | null
+  status: 'pending' | 'accepted' | 'declined' | 'expired'
+  expiresAt: string
+  createdAt: string
+  inviter: { name: string | null; email: string }
+  household: { id: string; name: string }
 }
 
 export type Household = {
@@ -19,15 +47,7 @@ export type Household = {
   name: string
   createdBy: string
   createdAt: string
-  members: HouseholdMember[]
-}
-
-export type HouseholdMember = {
-  id: string
-  householdId: string
-  userId: string
-  role: "owner" | "member"
-  joinedAt: string
+  members?: HouseholdMember[]
 }
 
 export type Account = {
