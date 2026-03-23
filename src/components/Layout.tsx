@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ArrowLeftRight, LayoutDashboard, PiggyBank, Tag, Wallet } from "lucide-react"
+import { ArrowLeftRight, LayoutDashboard, Menu, PiggyBank, Tag, Wallet, X } from "lucide-react"
 import HouseholdSwitcher from "./HouseholdSwitcher"
 import CreateHousehold from "./CreateHousehold"
 
@@ -29,6 +29,11 @@ const nav = [
   { label: "Categories", href: "/categories", icon: Tag },
   { label: "Budgets", href: "/budgets", icon: PiggyBank },
 ]
+
+// Items shown in the mobile bottom tab bar (subset of nav)
+const bottomTabs = nav.filter((item) =>
+  ["/dashboard", "/transactions", "/budgets"].includes(item.href)
+)
 
 type FormState = {
   amount: string
@@ -58,6 +63,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState<FormState>(emptyForm)
   const [createHouseholdOpen, setCreateHouseholdOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Close drawer whenever the route changes
+  useEffect(() => {
+    setDrawerOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     function handleOpenCreate() {
@@ -114,15 +125,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center px-4 py-3 bg-white border-b shrink-0">
+        <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b shrink-0">
           <img src="/aukse-logo.svg" alt="aukse" className="h-7" />
-          <div className="ml-auto">
-            <UserButton />
-          </div>
+          <UserButton />
         </div>
 
-        {/* Page content — extra bottom padding on mobile for the tab bar */}
-        <div className="flex-1 overflow-auto p-4 md:p-6 pb-20 md:pb-6">
+        {/* Page content — extra bottom padding on mobile for tab bar + floating button */}
+        <div className="flex-1 overflow-auto p-4 md:p-6 pb-32 md:pb-6">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
@@ -141,7 +150,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Bottom tab bar — mobile only */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex z-30">
-        {nav.map((item) => {
+        {bottomTabs.map((item) => {
           const Icon = item.icon
           const active = pathname === item.href
           return (
@@ -157,7 +166,64 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           )
         })}
+        {/* Menu tab */}
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="flex-1 flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-gray-400 transition-colors"
+        >
+          <Menu size={20} strokeWidth={1.75} />
+          Menu
+        </button>
       </nav>
+
+      {/* Mobile drawer */}
+      {drawerOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setDrawerOpen(false)}
+          />
+          {/* Panel */}
+          <aside className="relative w-64 bg-white flex flex-col h-full shadow-xl">
+            <div className="p-4 border-b flex items-center justify-between">
+              <img src="/aukse-logo.svg" alt="aukse" className="h-7" />
+              <button onClick={() => setDrawerOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="border-b pt-2">
+              <HouseholdSwitcher />
+            </div>
+            <nav className="flex-1 p-3 space-y-1">
+              {nav.map((item) => {
+                const Icon = item.icon
+                const active = pathname === item.href
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      active
+                        ? "bg-gray-100 text-gray-900"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    }`}
+                  >
+                    <Icon size={18} strokeWidth={active ? 2.5 : 1.75} />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </nav>
+            <div className="p-4 border-t flex items-center gap-2 min-w-0">
+              <UserButton />
+              <span className="text-sm text-gray-600 truncate">
+                {user?.firstName ?? user?.emailAddresses[0].emailAddress}
+              </span>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {/* Quick add dialog */}
       <Dialog open={open} onOpenChange={setOpen}>

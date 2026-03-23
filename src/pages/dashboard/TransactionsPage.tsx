@@ -41,9 +41,11 @@ const emptyForm: FormState = {
 }
 
 export default function TransactionsPage() {
+  const [page, setPage] = useState(1)
+
   const { isLoading: householdLoading } = useHouseholds()
   const household = useActiveHouseholdData()
-  const { data, isLoading } = useTransactions(household?.id)
+  const { data, isLoading } = useTransactions(household?.id, page)
   const { data: categories } = useCategories(household?.id)
   const createTransaction = useCreateTransaction()
   const updateTransaction = useUpdateTransaction()
@@ -173,6 +175,7 @@ export default function TransactionsPage() {
       {isLoading ? (
         <p className="text-gray-500">Loading transactions...</p>
       ) : (
+        <>
         <div className="bg-white rounded-lg border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -249,6 +252,33 @@ export default function TransactionsPage() {
             </table>
           </div>
         </div>
+
+        {data && data.meta.totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
+            <span>
+              Page {data.meta.page} of {data.meta.totalPages} &mdash; {data.meta.total} transactions
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(data.meta.totalPages, p + 1))}
+                disabled={page === data.meta.totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
+        </>
       )}
     </Layout>
   )

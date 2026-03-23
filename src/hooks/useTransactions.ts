@@ -2,18 +2,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useApi } from "../lib/axios"
 import { PaginatedResponse, Transaction } from "../types"
 
-export function useTransactions(householdId: string | undefined) {
+export function useTransactions(householdId: string | undefined, page = 1, limit = 20) {
   const api = useApi()
 
   return useQuery({
-    queryKey: ["transactions", householdId],
+    queryKey: ["transactions", householdId, page, limit],
     queryFn: async () => {
       const { data } = await api.get<PaginatedResponse<Transaction>>("/transactions", {
-        params: { householdId },
+        params: { householdId, page, limit },
       })
       return data
     },
     enabled: !!householdId,
+    placeholderData: (prev) => prev, // keep previous page visible while next loads
   })
 }
 
