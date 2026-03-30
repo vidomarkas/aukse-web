@@ -33,47 +33,52 @@ export function useCreateTransaction() {
   })
 }
 
-// derive spending by category from transactions
 export function useSpendingByCategory(householdId: string | undefined) {
-  const { data } = useTransactions(householdId)
+  const api = useApi()
 
-  if (!data) return []
-
-  const map = new Map<string, { name: string; value: number; color: string }>()
-
-  data.data
-    .filter((tx) => tx.type === "expense")
-    .forEach((tx) => {
-      const key = tx.category?.name ?? "Uncategorized"
-      const color = tx.category?.color ?? "#94a3b8"
-      const existing = map.get(key)
-      if (existing) {
-        existing.value += Number(tx.amount)
-      } else {
-        map.set(key, { name: key, value: Number(tx.amount), color })
-      }
-    })
-
-  return Array.from(map.values()).sort((a, b) => b.value - a.value)
+  return useQuery({
+    queryKey: ["analytics", "spending-by-category", householdId],
+    queryFn: async () => {
+      const { data } = await api.get<{ name: string; icon: string | null; color: string; value: number }[]>(
+        "/analytics/spending-by-category",
+        { params: { householdId } }
+      )
+      return data
+    },
+    enabled: !!householdId,
+  })
 }
 
-// derive monthly spending from transactions
 export function useMonthlySpending(householdId: string | undefined) {
-  const { data } = useTransactions(householdId)
+  const api = useApi()
 
-  if (!data) return []
-
-  const map = new Map<string, { month: string; expenses: number; income: number }>()
-
-  data.data.forEach((tx) => {
-    const month = new Date(tx.date).toLocaleString("default", { month: "short", year: "numeric" })
-    const existing = map.get(month) ?? { month, expenses: 0, income: 0 }
-    if (tx.type === "expense") existing.expenses += Number(tx.amount)
-    if (tx.type === "income") existing.income += Number(tx.amount)
-    map.set(month, existing)
+  return useQuery({
+    queryKey: ["analytics", "monthly-overview", householdId],
+    queryFn: async () => {
+      const { data } = await api.get<{ month: string; expenses: number; income: number }[]>(
+        "/analytics/monthly-overview",
+        { params: { householdId } }
+      )
+      return data
+    },
+    enabled: !!householdId,
   })
+}
 
-  return Array.from(map.values()).reverse()
+export function useCurrentMonthStats(householdId: string | undefined) {
+  const api = useApi()
+
+  return useQuery({
+    queryKey: ["analytics", "current-month-stats", householdId],
+    queryFn: async () => {
+      const { data } = await api.get<{ spent: number; income: number; balance: number; month: string }>(
+        "/analytics/current-month-stats",
+        { params: { householdId } }
+      )
+      return data
+    },
+    enabled: !!householdId,
+  })
 }
 
 export function useUpdateTransaction() {

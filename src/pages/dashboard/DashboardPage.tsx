@@ -3,46 +3,24 @@ import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
 import CreateHousehold from "../../components/CreateHousehold"
 import { useBudgets } from "../../hooks/useBudgets"
 import { useCategories } from "../../hooks/useCategories"
-import { useTransactions } from "../../hooks/useTransactions"
+import { useTransactions, useSpendingByCategory, useMonthlySpending, useCurrentMonthStats } from "../../hooks/useTransactions"
 import BudgetProgressBar from "../../components/BudgetProgressBar"
-import { useSpendingByCategory, useMonthlySpending } from "../../hooks/useTransactions"
 import {
     PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
 } from "recharts"
 import { Budget } from "@/types"
-import { useMemo } from "react"
 
 
 export default function DashboardPage() {
     const { isLoading } = useHouseholds()
     const household = useActiveHouseholdData()
-    const spendingByCategory = useSpendingByCategory(household?.id)
-    const monthlySpending = useMonthlySpending(household?.id)
+    const { data: spendingByCategory = [] } = useSpendingByCategory(household?.id)
+    const { data: monthlySpending = [] } = useMonthlySpending(household?.id)
+    const { data: currentMonthStats } = useCurrentMonthStats(household?.id)
     const { data: budgets } = useBudgets(household?.id)
     const { data: categories } = useCategories(household?.id)
     const { data: transactions } = useTransactions(household?.id)
-
-    const currentMonthStats = useMemo(() => {
-        if (!transactions) return { spent: 0, income: 0, balance: 0 }
-
-        const now = new Date()
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-
-        const currentMonth = transactions.data.filter(
-            (tx) => new Date(tx.date) >= monthStart
-        )
-
-        const spent = currentMonth
-            .filter((tx) => tx.type === "expense")
-            .reduce((sum, tx) => sum + Number(tx.amount), 0)
-
-        const income = currentMonth
-            .filter((tx) => tx.type === "income")
-            .reduce((sum, tx) => sum + Number(tx.amount), 0)
-
-        return { spent, income, balance: income - spent }
-    }, [transactions])
 
     if (isLoading) return <Layout><p>Loading...</p></Layout>
     if (!household) return <Layout><CreateHousehold /></Layout>
@@ -76,7 +54,7 @@ export default function DashboardPage() {
                         Spent this month
                     </p>
                     <p className="text-2xl font-bold text-red-600 mt-1">
-                        €{currentMonthStats.spent.toFixed(2)}
+                        €{(currentMonthStats?.spent ?? 0).toFixed(2)}
                     </p>
                 </div>
                 <div className="bg-white border rounded-lg p-5">
@@ -84,16 +62,16 @@ export default function DashboardPage() {
                         Income this month
                     </p>
                     <p className="text-2xl font-bold text-green-600 mt-1">
-                        €{currentMonthStats.income.toFixed(2)}
+                        €{(currentMonthStats?.income ?? 0).toFixed(2)}
                     </p>
                 </div>
                 <div className="bg-white border rounded-lg p-5">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
                         Balance
                     </p>
-                    <p className={`text-2xl font-bold mt-1 ${currentMonthStats.balance >= 0 ? "text-gray-900" : "text-red-600"
+                    <p className={`text-2xl font-bold mt-1 ${(currentMonthStats?.balance ?? 0) >= 0 ? "text-gray-900" : "text-red-600"
                         }`}>
-                        €{currentMonthStats.balance.toFixed(2)}
+                        €{(currentMonthStats?.balance ?? 0).toFixed(2)}
                     </p>
                 </div>
             </div>
