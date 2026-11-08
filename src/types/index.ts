@@ -83,6 +83,9 @@ export type Budget = {
   startDate: string
   endDate?: string
   category?: Category
+  spent: number
+  remaining: number
+  percentage: number
 }
 
 export type PaginatedResponse<T> = {
