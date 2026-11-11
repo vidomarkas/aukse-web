@@ -7,6 +7,9 @@ import NeedsAttention from "../../components/dashboard/NeedsAttention"
 import BudgetsSection from "../../components/dashboard/BudgetsSection"
 import WhatChanged from "../../components/dashboard/WhatChanged"
 import SixMonths from "../../components/dashboard/SixMonths"
+import ComingUp from "../../components/dashboard/ComingUp"
+import ConfirmDueDialog, { type DuePayment } from "../../components/recurring/ConfirmDueDialog"
+import { useUpcomingPayments } from "../../hooks/useRecurring"
 import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
 import { useBudgets } from "../../hooks/useBudgets"
 import { useCategories } from "../../hooks/useCategories"
@@ -72,6 +75,8 @@ export default function DashboardPage() {
   const budgetsQuery = useBudgets(household?.id)
   const budgets = budgetsQuery.data ?? []
   const { data: categories = [] } = useCategories(household?.id)
+  const { data: upcoming = [] } = useUpcomingPayments(household?.id, 14)
+  const [confirming, setConfirming] = useState<DuePayment | null>(null)
 
   if (isLoading) return <Layout><p className="text-stone">Loading…</p></Layout>
   if (!household) return <Layout><CreateHousehold /></Layout>
@@ -98,7 +103,15 @@ export default function DashboardPage() {
 
       <SpendingTimeline data={timeline} month={month} currency={CURRENCY} />
 
-      <NeedsAttention attention={attention} budgets={rows} daysLeft={daysLeftInMonth(month)} currency={CURRENCY} />
+      <NeedsAttention
+        attention={attention}
+        budgets={rows}
+        // Confirmations are about today, so they only show on the current month.
+        due={isCurrentMonth ? upcoming.filter((p) => p.status === "due") : []}
+        onConfirmDue={setConfirming}
+        daysLeft={daysLeftInMonth(month)}
+        currency={CURRENCY}
+      />
 
       <BudgetsSection
         rows={rows}
@@ -107,10 +120,23 @@ export default function DashboardPage() {
         onRetry={() => budgetsQuery.refetch()}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <WhatChanged data={changes} month={month} currency={CURRENCY} />
-        <SixMonths data={trend} selected={month} currency={CURRENCY} onSelect={setMonth} />
-      </div>
+      {isCurrentMonth ? (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <WhatChanged data={changes} month={month} currency={CURRENCY} />
+            <ComingUp payments={upcoming} currency={CURRENCY} onConfirm={setConfirming} />
+          </div>
+          <SixMonths data={trend} selected={month} currency={CURRENCY} onSelect={setMonth} />
+        </>
+      ) : (
+        // "Coming up" is about today, so past months show what changed and the trend side by side.
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <WhatChanged data={changes} month={month} currency={CURRENCY} />
+          <SixMonths data={trend} selected={month} currency={CURRENCY} onSelect={setMonth} />
+        </div>
+      )}
+
+      {confirming && <ConfirmDueDialog key={`${confirming.recurringId}-${confirming.date}`} due={confirming} onClose={() => setConfirming(null)} />}
     </Layout>
   )
 }

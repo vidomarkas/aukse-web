@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ArrowLeftRight, LayoutDashboard, Menu, PiggyBank, Plus, Settings, Tag, X } from "lucide-react"
+import { ArrowLeftRight, LayoutDashboard, Menu, PiggyBank, Plus, Repeat, Settings, Tag, X } from "lucide-react"
 import HouseholdSwitcher from "./HouseholdSwitcher"
 import CreateHousehold from "./CreateHousehold"
 import InviteDialog from "./InviteDialog"
@@ -30,6 +30,7 @@ const nav = [
   { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
   { label: "Categories", href: "/categories", icon: Tag },
   { label: "Budgets", href: "/budgets", icon: PiggyBank },
+  { label: "Recurring", href: "/recurring", icon: Repeat },
   { label: "Settings", href: "/settings", icon: Settings },
 ]
 
