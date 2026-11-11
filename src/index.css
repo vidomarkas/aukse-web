@@ -4,6 +4,31 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Fonts are self-hosted: no requests to Google Fonts or Fontshare (privacy).
+   Inter comes from @fontsource/inter (imported in main.tsx). General Sans files are fetched into
+   public/fonts by scripts/fetch-fonts.mjs before dev/build and aren't committed (ITF licence). */
+@font-face {
+    font-family: "General Sans";
+    src: url("/fonts/general-sans/GeneralSans-500.woff2") format("woff2");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: "General Sans";
+    src: url("/fonts/general-sans/GeneralSans-600.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: "General Sans";
+    src: url("/fonts/general-sans/GeneralSans-700.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* Brand tokens (aukse.app): bg-gold, text-plum, bg-coral-soft, font-display ... */
 @theme {
     --color-ink: #0f0f0e;
