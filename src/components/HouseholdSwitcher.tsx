@@ -1,8 +1,7 @@
 import { useState } from "react"
-import { ChevronDown, Check, Plus, Settings } from "lucide-react"
+import { ChevronDown, Check, House, Plus } from "lucide-react"
 import { useHouseholds, useActiveHouseholdData } from "../hooks/useHousehold"
 import { useActiveHousehold } from "../context/HouseholdContext"
-import HouseholdSettings from "./HouseholdSettings"
 
 export default function HouseholdSwitcher() {
   const { data: households = [] } = useHouseholds()
@@ -10,31 +9,24 @@ export default function HouseholdSwitcher() {
   const activeHousehold = useActiveHouseholdData()
 
   const [open, setOpen] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const atLimit = households.length >= 5
 
   return (
     <>
       <div className="relative px-3 pb-3">
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setOpen((v) => !v)}
-            className="flex-1 flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors min-w-0"
-          >
+        <p className="px-2 mb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-stone">Household</p>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          aria-label="Switch household"
+          className="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-full text-sm font-medium text-ink hover:bg-white transition-colors min-w-0"
+        >
+          <span className="flex items-center gap-2 min-w-0">
+            <House size={15} className="shrink-0 text-stone" />
             <span className="truncate">{activeHousehold?.name ?? "Select household"}</span>
-            <ChevronDown size={14} className="shrink-0 text-gray-400" />
-          </button>
-          {activeHousehold && (
-            <button
-              onClick={() => setSettingsOpen(true)}
-              className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors shrink-0"
-              title="Household settings"
-            >
-              <Settings size={14} />
-            </button>
-          )}
-        </div>
+          </span>
+          <ChevronDown size={14} className="shrink-0 text-stone" />
+        </button>
 
         {open && (
           <>
@@ -75,13 +67,6 @@ export default function HouseholdSwitcher() {
         )}
       </div>
 
-      {activeHousehold && (
-        <HouseholdSettings
-          household={activeHousehold}
-          open={settingsOpen}
-          onOpenChange={setSettingsOpen}
-        />
-      )}
     </>
   )
 }

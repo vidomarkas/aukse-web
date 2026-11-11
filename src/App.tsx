@@ -4,6 +4,8 @@ import DashboardPage from "./pages/dashboard/DashboardPage"
 import TransactionsPage from "./pages/dashboard/TransactionsPage"
 import CategoriesPage from "./pages/dashboard/CategoriesPage"
 import BudgetsPage from "./pages/dashboard/BudgetsPage"
+import SettingsPage from "./pages/dashboard/SettingsPage"
+import CategoryTransactionsPage from "./pages/dashboard/CategoryTransactionsPage"
 import AcceptInvitePage from "./pages/AcceptInvitePage"
 import { HouseholdProvider } from "./context/HouseholdContext"
 
@@ -31,7 +33,9 @@ export default function App() {
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/transactions" element={<TransactionsPage />} />
                     <Route path="/categories" element={<CategoriesPage />} />
+                    <Route path="/categories/:categoryId" element={<CategoryTransactionsPage />} />
                     <Route path="/budgets" element={<BudgetsPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
                   </Routes>
                 </SignedIn>
               </>

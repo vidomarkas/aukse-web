@@ -18,8 +18,10 @@ export default function CreateHousehold({ onCreated }: Props = {}) {
     if (!name.trim() || createHousehold.isPending) return
     setError(null)
     try {
-      await createHousehold.mutateAsync(name.trim())
+      const household = await createHousehold.mutateAsync(name.trim())
       onCreated?.()
+      // Step 2 of onboarding: Layout opens "Invite your partner" (it stays mounted while this form is replaced).
+      window.dispatchEvent(new CustomEvent("household-created", { detail: { id: household.id, name: household.name } }))
     } catch (err: any) {
       setError(err?.response?.data?.error ?? "Failed to create household. Please try again.")
     }

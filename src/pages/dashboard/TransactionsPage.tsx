@@ -1,284 +1,98 @@
 import { useState } from "react"
 import Layout from "../../components/Layout"
-import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
-import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction } from "../../hooks/useTransactions"
-import { useCategories } from "../../hooks/useCategories"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Transaction } from "../../types"
 import CreateHousehold from "../../components/CreateHousehold"
+import TransactionTable from "../../components/transactions/TransactionTable"
+import TransactionFormDialog from "../../components/transactions/TransactionFormDialog"
+import Pagination from "../../components/transactions/Pagination"
+import Notice from "../../components/transactions/Notice"
+import { useCategories } from "../../hooks/useCategories"
+import { useRecategorize } from "../../hooks/useRecategorize"
+import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
+import { useCurrentMonthStats, useDeleteTransaction, useTransactions } from "../../hooks/useTransactions"
+import { formatMoney } from "../../lib/format"
+import type { Transaction } from "../../types"
 
-type FormState = {
-  amount: string
-  currency: string
-  type: "expense" | "income" | "transfer"
-  description: string
-  date: string
-  categoryId?: string
-}
-
-const emptyForm: FormState = {
-  amount: "",
-  currency: "EUR",
-  type: "expense",
-  description: "",
-  date: new Date().toISOString().split("T")[0],
-  categoryId: undefined,
+/** Totals on each month header: what was spent and earned in that month (all pages, not just this one). */
+function MonthTotals({ householdId, month }: { householdId: string; month: string }) {
+  const { data } = useCurrentMonthStats(householdId, month)
+  if (!data) return null
+  return (
+    <span className="text-[13px] text-stone tabular-nums">
+      <span className="text-ink font-medium">{formatMoney(data.spent, "EUR", { whole: false })}</span> spent
+      {data.income > 0 && (
+        <>
+          {" · "}
+          <span className="text-[#4f7a45] font-medium">{formatMoney(data.income, "EUR", { whole: false })}</span> in
+        </>
+      )}
+    </span>
+  )
 }
 
 export default function TransactionsPage() {
   const [page, setPage] = useState(1)
-
   const { isLoading: householdLoading } = useHouseholds()
   const household = useActiveHouseholdData()
   const { data, isLoading } = useTransactions(household?.id, page)
-  const { data: categories } = useCategories(household?.id)
-  const createTransaction = useCreateTransaction()
-  const updateTransaction = useUpdateTransaction()
   const deleteTransaction = useDeleteTransaction()
+  const { data: categories } = useCategories(household?.id)
+  const recategorize = useRecategorize(categories)
+  const [dialog, setDialog] = useState<{ editing: Transaction | null } | null>(null)
 
-  const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState<Transaction | null>(null)
-  const [form, setForm] = useState<FormState>(emptyForm)
-
-  function openCreate() {
-    setEditing(null)
-    setForm(emptyForm)
-    setOpen(true)
-  }
-
-  function openEdit(tx: Transaction) {
-    setEditing(tx)
-    setForm({
-      amount: String(tx.amount),
-      currency: tx.currency,
-      type: tx.type,
-      description: tx.description ?? "",
-      date: tx.date.split("T")[0],
-      categoryId: tx.categoryId ?? undefined,
-    })
-    setOpen(true)
-  }
-
-  async function handleSubmit() {
-    if (!household) return
-    if (editing) {
-      await updateTransaction.mutateAsync({
-        id: editing.id,
-        ...form,
-        amount: parseFloat(form.amount),
-      })
-    } else {
-      await createTransaction.mutateAsync({
-        ...form,
-        amount: parseFloat(form.amount),
-        householdId: household.id,
-      })
-    }
-    setOpen(false)
-    setForm(emptyForm)
-    setEditing(null)
-  }
-
-  async function handleDelete(id: string) {
+  async function handleDelete(tx: Transaction) {
     if (!confirm("Delete this transaction?")) return
-    await deleteTransaction.mutateAsync(id)
+    await deleteTransaction.mutateAsync(tx.id)
   }
 
-  if (householdLoading) return <Layout><p>Loading...</p></Layout>
+  if (householdLoading) return <Layout><p className="text-stone">Loading…</p></Layout>
   if (!household) return <Layout><CreateHousehold /></Layout>
 
   return (
     <Layout>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Transactions</h2>
-        <Button onClick={openCreate}>Add transaction</Button>
-      </div>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing ? "Edit transaction" : "New transaction"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 mt-2">
-            <Input
-              placeholder="Amount"
-              type="number"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: e.target.value })}
-            />
-            <Select
-              value={form.type}
-              onValueChange={(v) => setForm({ ...form, type: v as "expense" | "income" | "transfer" })}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="expense">Expense</SelectItem>
-                <SelectItem value="income">Income</SelectItem>
-                <SelectItem value="transfer">Transfer</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={form.categoryId ?? ""}
-              onValueChange={(v) => setForm({ ...form, categoryId: v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Category (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories?.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.icon} {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-            />
-            <Input
-              type="date"
-              value={form.date}
-              onChange={(e) => setForm({ ...form, date: e.target.value })}
-            />
-            <Button
-              className="w-full"
-              onClick={handleSubmit}
-              disabled={createTransaction.isPending || updateTransaction.isPending}
-            >
-              {createTransaction.isPending || updateTransaction.isPending
-                ? "Saving..."
-                : editing ? "Update transaction" : "Save transaction"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <header className="flex items-end justify-between gap-4 mb-8">
+        <div>
+          <p className="flex items-center gap-2 text-[13px] font-medium text-stone mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+            {household.name}
+          </p>
+          <h1 className="font-display text-5xl md:text-6xl font-semibold leading-[0.95] tracking-[-0.035em] text-ink">Transactions</h1>
+        </div>
+        <button
+          onClick={() => setDialog({ editing: null })}
+          className="shrink-0 bg-ink text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-ink-soft transition-colors"
+        >
+          Add transaction
+        </button>
+      </header>
 
       {isLoading ? (
-        <p className="text-gray-500">Loading transactions...</p>
+        <p className="text-stone">Loading transactions…</p>
       ) : (
         <>
-        <div className="bg-white rounded-lg border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Date</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">Description</th>
-                  <th className="hidden sm:table-cell text-left px-4 py-3 font-medium text-gray-600">Category</th>
-                  <th className="hidden sm:table-cell text-left px-4 py-3 font-medium text-gray-600">Type</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">Amount</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {data?.data.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
-                      {new Date(tx.date).toLocaleDateString()}
-                    </td>
-                    <td className="px-4 py-3 max-w-[160px]">
-                      <span className="block text-gray-900 truncate">{tx.description ?? "—"}</span>
-                      {tx.user && (
-                        <span className="block text-xs text-gray-400 truncate">
-                          {tx.user.name ?? tx.user.email}
-                        </span>
-                      )}
-                    </td>
-                    <td className="hidden sm:table-cell px-4 py-3 text-gray-500">
-                      {tx.category ? `${tx.category.icon} ${tx.category.name}` : "—"}
-                    </td>
-                    <td className="hidden sm:table-cell px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                        tx.type === "income"
-                          ? "bg-green-100 text-green-700"
-                          : tx.type === "transfer"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-red-100 text-red-700"
-                      }`}>
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td className={`px-4 py-3 text-right font-medium whitespace-nowrap ${
-                      tx.type === "income" ? "text-green-600" : "text-red-600"
-                    }`}>
-                      {tx.type === "income" ? "+" : "-"}{tx.amount} {tx.currency}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openEdit(tx)}
-                          className="text-xs text-blue-600 hover:underline"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(tx.id)}
-                          className="text-xs text-red-500 hover:underline"
-                          disabled={deleteTransaction.isPending}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {data?.data.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
-                      No transactions yet
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {data && data.meta.totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
-            <span>
-              Page {data.meta.page} of {data.meta.totalPages} &mdash; {data.meta.total} transactions
-            </span>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(data.meta.totalPages, p + 1))}
-                disabled={page === data.meta.totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
+          <TransactionTable
+            transactions={data?.data ?? []}
+            renderMonthSummary={(month) => <MonthTotals householdId={household.id} month={month} />}
+            onEdit={(tx) => setDialog({ editing: tx })}
+            onDelete={handleDelete}
+            deleting={deleteTransaction.isPending}
+            categories={categories}
+            onChangeCategory={recategorize.change}
+            savingCategoryFor={recategorize.savingId}
+          />
+          {data && <Pagination meta={data.meta} onPage={setPage} />}
         </>
+      )}
+
+      <Notice notice={recategorize.notice} />
+
+      {dialog && (
+        <TransactionFormDialog
+          key={dialog.editing?.id ?? "new"}
+          open
+          onOpenChange={(open) => !open && setDialog(null)}
+          householdId={household.id}
+          editing={dialog.editing}
+        />
       )}
     </Layout>
   )
