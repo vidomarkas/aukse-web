@@ -3,7 +3,6 @@ import Layout from "../../components/Layout"
 import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
 import { useBudgets, useCreateBudget, useUpdateBudget, useDeleteBudget } from "../../hooks/useBudgets"
 import { useCategories } from "../../hooks/useCategories"
-import { useTransactions } from "../../hooks/useTransactions"
 import BudgetProgressBar from "../../components/BudgetProgressBar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,7 +43,6 @@ export default function BudgetsPage() {
   const household = useActiveHouseholdData()
   const { data: budgets, isLoading } = useBudgets(household?.id)
   const { data: categories } = useCategories(household?.id)
-  const { data: transactions } = useTransactions(household?.id)
   const createBudget = useCreateBudget()
   const updateBudget = useUpdateBudget()
   const deleteBudget = useDeleteBudget()
@@ -52,23 +50,6 @@ export default function BudgetsPage() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Budget | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
-
-  // calculate spending per category from transactions
-  function getSpentForBudget(budget: Budget) {
-    if (!transactions) return 0
-    const now = new Date()
-    const periodStart = budget.period === "monthly"
-      ? new Date(now.getFullYear(), now.getMonth(), 1)
-      : new Date(now.getFullYear(), 0, 1)
-
-    return transactions.data
-      .filter((tx) =>
-        tx.type === "expense" &&
-        (!budget.categoryId || tx.categoryId === budget.categoryId) &&
-        new Date(tx.date) >= periodStart
-      )
-      .reduce((sum, tx) => sum + Number(tx.amount), 0)
-  }
 
   function openCreate() {
     setEditing(null)
@@ -187,7 +168,6 @@ export default function BudgetsPage() {
       ) : (
         <div className="bg-white border rounded-lg divide-y">
           {budgets?.map((budget) => {
-            const spent = getSpentForBudget(budget)
             const category = categories?.find(c => c.id === budget.categoryId)
             return (
               <div key={budget.id} className="p-4">
@@ -212,7 +192,7 @@ export default function BudgetsPage() {
                   name={category?.name ?? "Overall"}
                   icon={category?.icon}
                   color={category?.color}
-                  spent={spent}
+                  spent={budget.spent}
                   limit={Number(budget.amount)}
                   currency={budget.currency}
                   period={budget.period}

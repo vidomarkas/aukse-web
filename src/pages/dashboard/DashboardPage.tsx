@@ -3,15 +3,12 @@ import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
 import CreateHousehold from "../../components/CreateHousehold"
 import { useBudgets } from "../../hooks/useBudgets"
 import { useCategories } from "../../hooks/useCategories"
-import { useTransactions, useSpendingByCategory, useMonthlySpending, useCurrentMonthStats } from "../../hooks/useTransactions"
+import { useSpendingByCategory, useMonthlySpending, useCurrentMonthStats } from "../../hooks/useTransactions"
 import BudgetProgressBar from "../../components/BudgetProgressBar"
 import {
     PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend
 } from "recharts"
-import { Budget } from "@/types"
-
-
 export default function DashboardPage() {
     const { isLoading } = useHouseholds()
     const household = useActiveHouseholdData()
@@ -20,26 +17,9 @@ export default function DashboardPage() {
     const { data: currentMonthStats } = useCurrentMonthStats(household?.id)
     const { data: budgets } = useBudgets(household?.id)
     const { data: categories } = useCategories(household?.id)
-    const { data: transactions } = useTransactions(household?.id)
 
     if (isLoading) return <Layout><p>Loading...</p></Layout>
     if (!household) return <Layout><CreateHousehold /></Layout>
-
-    function getSpentForBudget(budget: Budget) {
-        if (!transactions) return 0
-        const now = new Date()
-        const periodStart = budget.period === "monthly"
-            ? new Date(now.getFullYear(), now.getMonth(), 1)
-            : new Date(now.getFullYear(), 0, 1)
-
-        return transactions.data
-            .filter((tx) =>
-                tx.type === "expense" &&
-                (!budget.categoryId || tx.categoryId === budget.categoryId) &&
-                new Date(tx.date) >= periodStart
-            )
-            .reduce((sum, tx) => sum + Number(tx.amount), 0)
-    }
 
 
 
@@ -142,7 +122,6 @@ export default function DashboardPage() {
                     <h3 className="text-sm font-semibold text-gray-700 mb-4">Budget overview</h3>
                     <div className="space-y-4">
                         {budgets.map((budget) => {
-                            const spent = getSpentForBudget(budget)
                             const category = categories?.find(c => c.id === budget.categoryId)
                             return (
                                 <BudgetProgressBar
@@ -150,7 +129,7 @@ export default function DashboardPage() {
                                     name={category?.name ?? "Overall"}
                                     icon={category?.icon}
                                     color={category?.color}
-                                    spent={spent}
+                                    spent={budget.spent}
                                     limit={Number(budget.amount)}
                                     currency={budget.currency}
                                     period={budget.period}

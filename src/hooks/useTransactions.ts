@@ -18,6 +18,12 @@ export function useTransactions(householdId: string | undefined, page = 1, limit
   })
 }
 
+function invalidateTransactionDependents(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ["transactions"] })
+  queryClient.invalidateQueries({ queryKey: ["analytics"] })
+  queryClient.invalidateQueries({ queryKey: ["budgets"] })
+}
+
 export function useCreateTransaction() {
   const api = useApi()
   const queryClient = useQueryClient()
@@ -28,7 +34,7 @@ export function useCreateTransaction() {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      invalidateTransactionDependents(queryClient)
     },
   })
 }
@@ -91,7 +97,7 @@ export function useUpdateTransaction() {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      invalidateTransactionDependents(queryClient)
     },
   })
 }
@@ -105,7 +111,7 @@ export function useDeleteTransaction() {
       await api.delete(`/transactions/${id}`)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      invalidateTransactionDependents(queryClient)
     },
   })
 }
