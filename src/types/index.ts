@@ -4,6 +4,8 @@ export type Transaction = {
   accountId?: string
   categoryId?: string
   userId: string
+  /** Set when the transaction came from (or was made into) a recurring payment. */
+  recurringId?: string | null
   amount: number
   currency: string
   type: "expense" | "income" | "transfer"
@@ -96,4 +98,43 @@ export type PaginatedResponse<T> = {
     limit: number
     totalPages: number
   }
+}
+export type Frequency = "daily" | "weekly" | "monthly" | "yearly"
+
+export type RecurringPayment = {
+  id: string
+  householdId: string
+  description: string
+  amount: number
+  currency: string
+  type: "expense" | "income" | "transfer"
+  categoryId: string | null
+  category: { id: string; name: string; icon: string | null; color: string | null } | null
+  user: { id: string; name: string | null; email: string }
+  frequency: Frequency
+  interval: number
+  startDate: string
+  endDate: string | null
+  nextDueDate: string
+  /** false = paused (or ended, see hasEnded). */
+  isActive: boolean
+  /** true: added on its due date by itself. false: waits for you to confirm the amount. */
+  autoAdd: boolean
+  monthlyAmount: number
+  /** Waiting for you to confirm. */
+  isDue: boolean
+  hasEnded: boolean
+}
+
+export type UpcomingPayment = {
+  recurringId: string
+  description: string
+  amount: number
+  currency: string
+  type: "expense" | "income" | "transfer"
+  autoAdd: boolean
+  category: RecurringPayment["category"]
+  date: string
+  /** "due": waiting for you to confirm. */
+  status: "due" | "upcoming"
 }

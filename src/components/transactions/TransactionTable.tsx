@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from "react"
 import { Link } from "react-router-dom"
-import { Loader2 } from "lucide-react"
+import { Loader2, Repeat } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import type { Category, Transaction } from "../../types"
 import { formatMoney, monthName } from "../../lib/format"
@@ -88,6 +88,7 @@ export default function TransactionTable({
   categories,
   onChangeCategory,
   savingCategoryFor,
+  onMakeRecurring,
 }: {
   transactions: Transaction[]
   renderMonthSummary?: (month: string) => ReactNode
@@ -99,6 +100,8 @@ export default function TransactionTable({
   categories?: Category[]
   onChangeCategory?: (tx: Transaction, categoryId: string) => void
   savingCategoryFor?: string | null
+  /** Adds a "Make recurring" action to transactions that aren't recurring yet. */
+  onMakeRecurring?: (tx: Transaction) => void
 }) {
   const picker = (tx: Transaction) =>
     categories && onChangeCategory ? (
@@ -147,7 +150,14 @@ export default function TransactionTable({
                   <tr className={`group hover:bg-cream/60 ${startsMonth ? "" : "border-t border-line"}`}>
                     <td className="px-5 py-3 text-stone whitespace-nowrap tabular-nums">{day(tx)}</td>
                     <td className="px-5 py-3 max-w-[220px]">
-                      <span className="block text-ink truncate">{tx.description?.trim() || "—"}</span>
+                      <span className="flex items-center gap-1.5 text-ink min-w-0">
+                        <span className="truncate">{tx.description?.trim() || "—"}</span>
+                        {tx.recurringId && (
+                          <Link to="/recurring" title="Recurring payment" aria-label="Recurring payment" className="shrink-0 text-gold hover:text-ink">
+                            <Repeat size={13} strokeWidth={2.25} />
+                          </Link>
+                        )}
+                      </span>
                       <span className="block text-xs text-stone truncate">
                         {tx.user?.name ?? tx.user?.email}
                         {tx.type !== "expense" && (
@@ -181,6 +191,16 @@ export default function TransactionTable({
                       {formatMoney(Number(tx.amount), tx.currency, { whole: false })}
                     </td>
                     <td className="px-5 py-3 text-right whitespace-nowrap">
+                      {onMakeRecurring && !tx.recurringId && (
+                        <button
+                          onClick={() => onMakeRecurring(tx)}
+                          title="Make recurring"
+                          aria-label={`Make ${tx.description?.trim() || "this transaction"} recurring`}
+                          className="inline-flex align-middle mr-3 text-stone opacity-60 group-hover:opacity-100 hover:text-ink focus-visible:opacity-100"
+                        >
+                          <Repeat size={14} />
+                        </button>
+                      )}
                       <button onClick={() => onEdit(tx)} className="text-xs font-medium text-stone hover:text-ink mr-3">
                         Edit
                       </button>

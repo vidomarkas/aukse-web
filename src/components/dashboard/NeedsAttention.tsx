@@ -3,22 +3,29 @@ import { Bell } from "lucide-react"
 import type { Attention } from "../../hooks/useTransactions"
 import type { BudgetRow } from "../../lib/budgets"
 import { formatMoney } from "../../lib/format"
+import { relativeDay } from "../../lib/recurring"
+import type { UpcomingPayment } from "../../types"
 
 /** A slim strip of things to act on. Renders nothing when there's nothing to do. */
 export default function NeedsAttention({
   attention,
   budgets,
+  due = [],
+  onConfirmDue,
   daysLeft,
   currency,
 }: {
   attention?: Attention
   budgets: BudgetRow[]
+  /** Recurring payments waiting for the user to confirm the amount. */
+  due?: UpcomingPayment[]
+  onConfirmDue?: (payment: UpcomingPayment) => void
   daysLeft: number
   currency: string
 }) {
   const uncategorized = attention?.uncategorized
   const atRisk = budgets.filter((b) => b.status !== "ok")
-  if (!uncategorized?.count && atRisk.length === 0) return null
+  if (!uncategorized?.count && atRisk.length === 0 && due.length === 0) return null
 
   return (
     <div className="flex flex-wrap items-center gap-2 bg-white border border-line rounded-3xl px-5 py-3.5 mb-4">
@@ -26,6 +33,15 @@ export default function NeedsAttention({
         <Bell size={16} strokeWidth={2} />
         Needs attention
       </span>
+      {due.map((p) => (
+        <button
+          key={`${p.recurringId}-${p.date}`}
+          onClick={() => onConfirmDue?.(p)}
+          className="text-[13px] font-medium rounded-full px-3.5 py-1.5 bg-plum-soft text-plum hover:bg-plum/15 transition-colors"
+        >
+          Confirm {p.description} · due {relativeDay(p.date).toLowerCase()} →
+        </button>
+      ))}
       {uncategorized && uncategorized.count > 0 && (
         <Link
           to={attention?.otherCategoryId ? `/categories/${attention.otherCategoryId}` : "/transactions"}

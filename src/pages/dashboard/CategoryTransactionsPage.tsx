@@ -7,6 +7,7 @@ import TransactionTable from "../../components/transactions/TransactionTable"
 import TransactionFormDialog from "../../components/transactions/TransactionFormDialog"
 import Pagination from "../../components/transactions/Pagination"
 import Notice from "../../components/transactions/Notice"
+import RecurringFormDialog from "../../components/recurring/RecurringFormDialog"
 import { useCategories } from "../../hooks/useCategories"
 import { useRecategorize } from "../../hooks/useRecategorize"
 import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
@@ -50,6 +51,7 @@ export default function CategoryTransactionsPage() {
   const { data: categories } = useCategories(household?.id)
   const recategorize = useRecategorize(categories)
   const [dialog, setDialog] = useState<{ editing: Transaction | null } | null>(null)
+  const [makeRecurring, setMakeRecurring] = useState<Transaction | null>(null)
 
   async function handleDelete(tx: Transaction) {
     if (!confirm("Delete this transaction?")) return
@@ -116,6 +118,7 @@ export default function CategoryTransactionsPage() {
                 categories={categories}
                 onChangeCategory={recategorize.change}
                 savingCategoryFor={recategorize.savingId}
+                onMakeRecurring={setMakeRecurring}
               />
               {data && <Pagination meta={data.meta} onPage={setPage} />}
             </>
@@ -124,6 +127,16 @@ export default function CategoryTransactionsPage() {
       )}
 
       <Notice notice={recategorize.notice} />
+
+      {makeRecurring && (
+        <RecurringFormDialog
+          key={makeRecurring.id}
+          open
+          onOpenChange={(open) => !open && setMakeRecurring(null)}
+          householdId={household.id}
+          fromTransaction={makeRecurring}
+        />
+      )}
 
       {dialog && (
         <TransactionFormDialog
