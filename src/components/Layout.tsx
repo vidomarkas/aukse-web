@@ -19,15 +19,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ArrowLeftRight, LayoutDashboard, Menu, PiggyBank, Tag, Wallet, X } from "lucide-react"
+import { ArrowLeftRight, LayoutDashboard, Menu, PiggyBank, Plus, Settings, Tag, X } from "lucide-react"
 import HouseholdSwitcher from "./HouseholdSwitcher"
 import CreateHousehold from "./CreateHousehold"
+import InviteDialog from "./InviteDialog"
+import MemberAvatars from "./MemberAvatars"
 
 const nav = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Transactions", href: "/transactions", icon: ArrowLeftRight },
   { label: "Categories", href: "/categories", icon: Tag },
   { label: "Budgets", href: "/budgets", icon: PiggyBank },
+  { label: "Settings", href: "/settings", icon: Settings },
 ]
 
 // Items shown in the mobile bottom tab bar (subset of nav)
@@ -53,6 +56,16 @@ const emptyForm: FormState = {
   categoryId: undefined,
 }
 
+/** The wordmark from aukse.app: a gold dot and "Aukse" in General Sans. */
+function Logo() {
+  return (
+    <Link to="/dashboard" className="flex items-center gap-2 font-display text-[22px] font-semibold tracking-[-0.02em] text-ink">
+      <span className="w-3.5 h-3.5 rounded-full bg-gold" />
+      Aukse
+    </Link>
+  )
+}
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const { user } = useUser()
@@ -64,6 +77,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [createHouseholdOpen, setCreateHouseholdOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  // Invite dialog: from the sidebar's + button, or as onboarding step 2 right after creating a household.
+  const [invite, setInvite] = useState<{ id: string; name: string; welcome: boolean } | null>(null)
 
   // Close drawer whenever the route changes
   useEffect(() => {
@@ -74,9 +89,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     function handleOpenCreate() {
       setCreateHouseholdOpen(true)
     }
+    function handleCreated(event: Event) {
+      const { id, name } = (event as CustomEvent<{ id: string; name: string }>).detail
+      setCreateHouseholdOpen(false)
+      setInvite({ id, name, welcome: true })
+    }
     window.addEventListener("open-create-household", handleOpenCreate)
-    return () => window.removeEventListener("open-create-household", handleOpenCreate)
+    window.addEventListener("household-created", handleCreated)
+    return () => {
+      window.removeEventListener("open-create-household", handleOpenCreate)
+      window.removeEventListener("household-created", handleCreated)
+    }
   }, [])
+
+  function openInvite() {
+    if (household) setInvite({ id: household.id, name: household.name, welcome: false })
+  }
 
   async function handleSubmit() {
     if (!household) return
@@ -90,33 +118,37 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       {/* Sidebar — desktop only */}
-      <aside className="hidden md:flex w-56 bg-white border-r flex-col shrink-0">
-        <div className="p-4 border-b">
-          <img src="/aukse-logo.svg" alt="aukse" className="h-8" />
+      <aside className="hidden md:flex w-60 bg-cream border-r border-line flex-col shrink-0">
+        <div className="px-6 py-5">
+          <Logo />
         </div>
-        <div className="border-b pt-2">
+        <div className="pt-1">
           <HouseholdSwitcher />
+          <MemberAvatars householdId={household?.id} onInvite={openInvite} />
         </div>
-        <nav className="flex-1 p-3 space-y-1">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                pathname === item.href
-                  ? "bg-gray-100 text-gray-900"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav className="flex-1 px-3 py-2 space-y-1">
+          {nav.map((item) => {
+            const Icon = item.icon
+            const active = pathname === item.href
+            return (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-full text-[15px] font-medium transition-colors ${
+                  active ? "bg-ink text-white" : "text-stone hover:bg-white hover:text-ink"
+                }`}
+              >
+                <Icon size={17} strokeWidth={active ? 2.25 : 1.75} />
+                {item.label}
+              </Link>
+            )
+          })}
         </nav>
-        <div className="p-4 border-t flex items-center gap-2 min-w-0">
+        <div className="p-4 border-t border-line flex items-center gap-2 min-w-0">
           <UserButton />
-          <span className="text-sm text-gray-600 truncate">
+          <span className="text-sm text-stone truncate">
             {user?.firstName ?? user?.emailAddresses[0].emailAddress}
           </span>
         </div>
@@ -125,14 +157,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <main className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b shrink-0">
-          <img src="/aukse-logo.svg" alt="aukse" className="h-7" />
+        <div className="md:hidden flex items-center justify-between px-4 py-3 bg-cream/85 backdrop-blur border-b border-line shrink-0">
+          <Logo />
           <UserButton />
         </div>
 
         {/* Page content — extra bottom padding on mobile for tab bar + floating button */}
-        <div className="flex-1 overflow-auto p-4 md:p-6 pb-32 md:pb-6">
-          <div className="max-w-7xl mx-auto">
+        <div className="flex-1 overflow-auto px-4 py-6 md:px-10 md:py-10 pb-32 md:pb-10">
+          <div className="max-w-6xl mx-auto">
             {children}
           </div>
         </div>
@@ -141,15 +173,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {household && (
           <button
             onClick={() => setOpen(true)}
-            className="fixed bottom-20 right-4 md:bottom-6 md:right-6 w-12 h-12 bg-gray-900 text-white rounded-full shadow-lg hover:bg-gray-700 transition-colors flex items-center justify-center"
+            aria-label="Add transaction"
+            title="Add transaction"
+            className="fixed bottom-20 right-4 md:bottom-8 md:right-8 w-14 h-14 bg-gold text-ink rounded-full shadow-[0_8px_24px_rgba(245,184,46,0.45)] hover:scale-105 transition-transform flex items-center justify-center"
           >
-            <Wallet />
+            <Plus size={24} strokeWidth={2.25} />
           </button>
         )}
       </main>
 
       {/* Bottom tab bar — mobile only */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t flex z-30">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-cream/95 backdrop-blur border-t border-line flex z-30">
         {bottomTabs.map((item) => {
           const Icon = item.icon
           const active = pathname === item.href
@@ -158,7 +192,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               key={item.href}
               to={item.href}
               className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors ${
-                active ? "text-gray-900" : "text-gray-400"
+                active ? "text-ink" : "text-stone"
               }`}
             >
               <Icon size={20} strokeWidth={active ? 2.5 : 1.75} />
@@ -169,7 +203,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Menu tab */}
         <button
           onClick={() => setDrawerOpen(true)}
-          className="flex-1 flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-gray-400 transition-colors"
+          className="flex-1 flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-stone transition-colors"
         >
           <Menu size={20} strokeWidth={1.75} />
           Menu
@@ -185,17 +219,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             onClick={() => setDrawerOpen(false)}
           />
           {/* Panel */}
-          <aside className="relative w-64 bg-white flex flex-col h-full shadow-xl">
-            <div className="p-4 border-b flex items-center justify-between">
-              <img src="/aukse-logo.svg" alt="aukse" className="h-7" />
-              <button onClick={() => setDrawerOpen(false)} className="text-gray-400 hover:text-gray-600">
+          <aside className="relative w-64 bg-cream flex flex-col h-full shadow-xl">
+            <div className="px-5 py-4 flex items-center justify-between">
+              <Logo />
+              <button onClick={() => setDrawerOpen(false)} className="text-stone hover:text-ink">
                 <X size={20} />
               </button>
             </div>
-            <div className="border-b pt-2">
+            <div className="pt-1">
               <HouseholdSwitcher />
+              <MemberAvatars householdId={household?.id} onInvite={openInvite} />
             </div>
-            <nav className="flex-1 p-3 space-y-1">
+            <nav className="flex-1 px-3 py-2 space-y-1">
               {nav.map((item) => {
                 const Icon = item.icon
                 const active = pathname === item.href
@@ -203,10 +238,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Link
                     key={item.href}
                     to={item.href}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      active
-                        ? "bg-gray-100 text-gray-900"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    className={`flex items-center gap-3 px-4 py-2.5 rounded-full text-[15px] font-medium transition-colors ${
+                      active ? "bg-ink text-white" : "text-stone hover:bg-white hover:text-ink"
                     }`}
                   >
                     <Icon size={18} strokeWidth={active ? 2.5 : 1.75} />
@@ -215,9 +248,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 )
               })}
             </nav>
-            <div className="p-4 border-t flex items-center gap-2 min-w-0">
+            <div className="p-4 border-t border-line flex items-center gap-2 min-w-0">
               <UserButton />
-              <span className="text-sm text-gray-600 truncate">
+              <span className="text-sm text-stone truncate">
                 {user?.firstName ?? user?.emailAddresses[0].emailAddress}
               </span>
             </div>
@@ -287,6 +320,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {invite && (
+        <InviteDialog
+          householdId={invite.id}
+          householdName={invite.name}
+          welcome={invite.welcome}
+          open
+          onOpenChange={(open) => !open && setInvite(null)}
+        />
+      )}
 
       {/* Create household dialog (triggered from HouseholdSwitcher) */}
       <Dialog open={createHouseholdOpen} onOpenChange={setCreateHouseholdOpen}>

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import Layout from "../../components/Layout"
 import { useHouseholds, useActiveHouseholdData } from "../../hooks/useHousehold"
 import {
@@ -185,7 +186,9 @@ export default function CategoriesPage() {
                         {cat.icon ?? "•"}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{cat.name}</p>
+                        <Link to={`/categories/${cat.id}`} className="text-sm font-medium text-gray-900 hover:underline underline-offset-4">
+                          {cat.name}
+                        </Link>
                         <p className="text-xs text-gray-400">{cat.isIncome ? "Income" : "Expense"}</p>
                       </div>
                     </div>
@@ -224,7 +227,9 @@ export default function CategoriesPage() {
                     {cat.icon ?? "•"}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{cat.name}</p>
+                    <Link to={`/categories/${cat.id}`} className="text-sm font-medium text-gray-900 hover:underline underline-offset-4">
+                          {cat.name}
+                        </Link>
                     <p className="text-xs text-gray-400">{cat.isIncome ? "Income" : "Expense"}</p>
                   </div>
                 </div>

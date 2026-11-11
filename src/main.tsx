@@ -18,7 +18,8 @@ createRoot(document.getElementById("root")!).render(
     <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
       <QueryClientProvider client={queryClient}>
         <App />
-        <ReactQueryDevtools initialIsOpen={false} />
+        {/* Bottom-left, so it doesn't cover the add-transaction button. */}
+        <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
       </QueryClientProvider>
     </ClerkProvider>
   </StrictMode>

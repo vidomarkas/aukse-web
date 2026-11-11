@@ -50,14 +50,17 @@ export default function BudgetsPage() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState<Budget | null>(null)
   const [form, setForm] = useState<FormState>(emptyForm)
+  const [error, setError] = useState<string | null>(null)
 
   function openCreate() {
+    setError(null)
     setEditing(null)
     setForm(emptyForm)
     setOpen(true)
   }
 
   function openEdit(budget: Budget) {
+    setError(null)
     setEditing(budget)
     setForm({
       categoryId: budget.categoryId ?? "",
@@ -77,10 +80,18 @@ export default function BudgetsPage() {
       categoryId: form.categoryId || undefined,
       householdId: household.id,
     }
-    if (editing) {
-      await updateBudget.mutateAsync({ id: editing.id, ...payload })
-    } else {
-      await createBudget.mutateAsync(payload)
+    setError(null)
+    try {
+      if (editing) {
+        await updateBudget.mutateAsync({ id: editing.id, ...payload })
+      } else {
+        await createBudget.mutateAsync(payload)
+      }
+    } catch (err) {
+      // e.g. 409: a budget for this category already exists
+      const message = (err as { response?: { data?: { error?: string } } }).response?.data?.error
+      setError(message ?? "Couldn't save the budget. Please try again.")
+      return
     }
     setOpen(false)
     setEditing(null)
@@ -146,6 +157,11 @@ export default function BudgetsPage() {
               value={form.startDate}
               onChange={(e) => setForm({ ...form, startDate: e.target.value })}
             />
+            {error && (
+              <p role="alert" className="text-sm text-[#b54a22] bg-coral-soft/50 rounded-xl px-3 py-2">
+                {error}
+              </p>
+            )}
             <Button
               className="w-full"
               onClick={handleSubmit}
