@@ -1,80 +1,26 @@
-import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useUser } from "@clerk/clerk-react"
-import { Check, Copy, Loader2, Pencil, Plus } from "lucide-react"
+import { Check, Copy, Loader2 } from "lucide-react"
 import Layout from "../../components/Layout"
 import CreateHousehold from "../../components/CreateHousehold"
 import DashboardCard from "../../components/dashboard/DashboardCard"
+import YourData from "../../components/settings/YourData"
+import HouseholdsManager from "../../components/settings/HouseholdsManager"
 import InvitePanel from "../../components/InvitePanel"
 import { inviteLink, useCopy } from "../../lib/invites"
-import { Input } from "@/components/ui/input"
 import { useActiveHousehold } from "../../context/HouseholdContext"
 import {
   useActiveHouseholdData,
   useCancelInvitation,
-  useDeleteHousehold,
   useHouseholdInvitations,
   useHouseholdMembers,
   useHouseholds,
   useRemoveMember,
-  useUpdateHousehold,
 } from "../../hooks/useHousehold"
 import { initials } from "../../lib/format"
 import type { Household } from "../../types"
 
 const AVATAR_COLORS = ["bg-gold-soft", "bg-coral-soft", "bg-sage", "bg-plum-soft"]
-
-function HouseholdNameSection({ household, canEdit }: { household: Household; canEdit: boolean }) {
-  const updateHousehold = useUpdateHousehold()
-  const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(household.name)
-
-  async function save() {
-    if (!name.trim() || name.trim() === household.name) return setEditing(false)
-    await updateHousehold.mutateAsync({ id: household.id, name: name.trim() })
-    setEditing(false)
-  }
-
-  return (
-    <DashboardCard label="Household" title="Name" className="mb-4">
-      {editing ? (
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") save()
-              if (e.key === "Escape") setEditing(false)
-            }}
-            autoFocus
-            className="rounded-full h-11 px-4"
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={save}
-              disabled={updateHousehold.isPending || !name.trim()}
-              className="bg-ink text-white rounded-full px-5 h-11 text-sm font-medium hover:bg-ink-soft disabled:opacity-50"
-            >
-              {updateHousehold.isPending ? "Saving…" : "Save"}
-            </button>
-            <button onClick={() => { setName(household.name); setEditing(false) }} className="rounded-full px-4 h-11 text-sm font-medium text-stone hover:text-ink">
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between gap-4">
-          <p className="font-display text-2xl font-semibold text-ink">{household.name}</p>
-          {canEdit && (
-            <button onClick={() => setEditing(true)} className="inline-flex items-center gap-1.5 text-sm font-medium text-stone hover:text-ink">
-              <Pencil size={14} /> Rename
-            </button>
-          )}
-        </div>
-      )}
-    </DashboardCard>
-  )
-}
 
 function MembersSection({ household, isOwner, myUserId }: { household: Household; isOwner: boolean; myUserId?: string }) {
   const { data: members = [], isLoading } = useHouseholdMembers(household.id)
@@ -99,7 +45,7 @@ function MembersSection({ household, isOwner, myUserId }: { household: Household
   }
 
   return (
-    <DashboardCard label="Who's in this household" title="Members" className="mb-4">
+    <DashboardCard label={`Members of ${household.name}`} title="Members and invites" className="mb-4">
       {isLoading ? (
         <Loader2 size={18} className="animate-spin text-stone" />
       ) : (
@@ -182,91 +128,6 @@ function MembersSection({ household, isOwner, myUserId }: { household: Household
   )
 }
 
-function HouseholdsSection({ activeId }: { activeId: string }) {
-  const { data: households = [] } = useHouseholds()
-  const { setActiveHouseholdId } = useActiveHousehold()
-  const atLimit = households.length >= 5
-
-  return (
-    <DashboardCard
-      label="Households you belong to"
-      title="Your households"
-      className="mb-4"
-      action={
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent("open-create-household"))}
-          disabled={atLimit}
-          title={atLimit ? "You can belong to up to 5 households" : undefined}
-          className="inline-flex items-center gap-1.5 bg-ink text-white rounded-full px-4 py-2 text-sm font-medium hover:bg-ink-soft disabled:opacity-40"
-        >
-          <Plus size={15} /> New household
-        </button>
-      }
-    >
-      <div className="divide-y divide-line">
-        {households.map((h) => {
-          const active = h.id === activeId
-          const count = h.members?.length ?? 0
-          return (
-            <div key={h.id} className="flex items-center justify-between gap-3 py-3">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-ink truncate">{h.name}</p>
-                <p className="text-xs text-stone">
-                  {count} {count === 1 ? "member" : "members"}
-                </p>
-              </div>
-              {active ? (
-                <span className="text-xs font-medium rounded-full px-2.5 py-1 bg-ink text-white">Active</span>
-              ) : (
-                <button onClick={() => setActiveHouseholdId(h.id)} className="text-sm font-medium text-stone hover:text-ink">
-                  Switch to
-                </button>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </DashboardCard>
-  )
-}
-
-function DangerZone({ household }: { household: Household }) {
-  const deleteHousehold = useDeleteHousehold()
-  const { setActiveHouseholdId } = useActiveHousehold()
-  const navigate = useNavigate()
-  const [confirming, setConfirming] = useState(false)
-
-  async function remove() {
-    await deleteHousehold.mutateAsync(household.id)
-    setActiveHouseholdId(null)
-    navigate("/dashboard")
-  }
-
-  return (
-    <section className="border border-[#f3c7b6] bg-white rounded-3xl p-5 md:p-7">
-      <p className="text-[13px] font-medium text-[#b54a22] mb-1">Danger zone</p>
-      <h2 className="font-display text-xl font-semibold text-ink mb-2">Delete {household.name}</h2>
-      <p className="text-sm text-stone mb-4">
-        Permanently deletes the household with all its transactions, budgets and categories, for every member. This can't be undone.
-      </p>
-      {confirming ? (
-        <div className="flex flex-wrap gap-2">
-          <button onClick={remove} disabled={deleteHousehold.isPending} className="bg-[#d4532b] text-white rounded-full px-5 py-2.5 text-sm font-medium hover:bg-[#b54a22] disabled:opacity-60">
-            {deleteHousehold.isPending ? "Deleting…" : `Yes, delete ${household.name}`}
-          </button>
-          <button onClick={() => setConfirming(false)} className="rounded-full px-5 py-2.5 text-sm font-medium text-stone hover:text-ink">
-            Cancel
-          </button>
-        </div>
-      ) : (
-        <button onClick={() => setConfirming(true)} className="border border-[#f3c7b6] text-[#b54a22] rounded-full px-5 py-2.5 text-sm font-medium hover:bg-coral-soft/50">
-          Delete household
-        </button>
-      )}
-    </section>
-  )
-}
-
 export default function SettingsPage() {
   const { isLoading } = useHouseholds()
   const household = useActiveHouseholdData()
@@ -289,10 +150,9 @@ export default function SettingsPage() {
       </header>
 
       <div className="max-w-3xl">
-        <HouseholdNameSection key={household.id} household={household} canEdit={isOwner} />
+        <HouseholdsManager activeId={household.id} />
         <MembersSection household={household} isOwner={isOwner} myUserId={user?.id} />
-        <HouseholdsSection activeId={household.id} />
-        {isOwner && <DangerZone household={household} />}
+        <YourData />
       </div>
     </Layout>
   )

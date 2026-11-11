@@ -23,3 +23,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# General Sans webfonts: fetched by scripts/fetch-fonts.mjs, not committed (ITF licence forbids redistribution)
+public/fonts/general-sans/
